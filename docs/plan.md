@@ -19,7 +19,7 @@ A browser extension that:
 
 - Scans the page you're on and checks it against known real websites using a three-layer detection pipeline (below).
 - If it looks like a fake, shows a warning that explains *why* — highlighting the specific elements that gave it away.
-- Tests several warning designs against each other to find which one actually makes people stop and think.
+- Tests **five** warning designs against each other to find which one actually makes people stop and think — including one that *adapts in real time* based on how the user behaves (see Progressive Reveal below). This is the project's core research contribution, not a side feature.
 
 ## Detection Pipeline
 
@@ -85,7 +85,7 @@ Output: `assets/brands/brands.json` — a few MB total, bundled into the extensi
 
 - **Background service worker** — orchestrates the pipeline. On navigation to an `http(s)` page, captures a screenshot via `tabs.captureVisibleTab` and runs the domain check (pure JS).
 - **Offscreen document** — canvas-based image processing: resize/grayscale, DCT pHash, and logo template matching. (WXT supports an `offscreen.html` entrypoint.)
-- **Content script** — extracts DOM features (login form, logo, colors, keywords) and renders warnings with highlighted elements.
+- **Content script** — extracts DOM features (login form, logo, colors, keywords), monitors user behavior once a warning is shown, and renders warnings with highlighted elements.
 - **Packaged dataset** — `assets/brands/brands.json` loaded by the workers.
 
 ### Permissions (Manifest V3)
@@ -100,14 +100,38 @@ Output: `assets/brands/brands.json` — a few MB total, bundled into the extensi
 
 Uses the pipeline output (`flaggedElements` + `reasoning`) to render warnings that point at the actual suspicious parts of the page.
 
-Tested delivery formats (A/B):
+### The five warning conditions
 
-- Full-screen interceptor banner.
-- Popup dialog.
-- Tooltip near the password field.
-- Small status icon.
+Four static formats plus one adaptive format, evaluated against each other:
 
-Logging: for each warning, record whether it was shown, dismissed, proceeded, or the user went back — the interaction data used to evaluate which format works.
+| # | Condition | Behavior |
+|---|---|---|
+| 1 | **Banner** | Dismissible strip at the top of the page, non-blocking. |
+| 2 | **Modal** | Full-screen interceptor, forces an explicit choice before proceeding. |
+| 3 | **Passive Icon** | Small toolbar/badge icon change only, no interruption to the page. |
+| 4 | **Contextual Tooltip** | Warning anchored directly to the password input field. |
+| 5 | **Progressive Reveal** | *Adaptive.* Starts minimal (icon), escalates in real time based on measured user hesitation. |
+
+### Progressive Reveal — how it works
+
+This is the condition that differentiates the project from prior explainable-warning work (e.g. PhishXplain), which tests *what* a warning says but not *how* it's delivered or whether delivery should adapt to the user in the moment.
+
+**Signals tracked** (once a page is flagged and the initial low-level warning is showing):
+- Dwell time since the warning first appeared.
+- Mouse movement toward or away from the credential input field.
+- Repeated focus/typing attempts on the password field while a warning is still active.
+
+**Escalation stages**, advancing when hesitation signals cross defined thresholds:
+
+```
+icon  →  highlight (flagged element outlined)  →  banner  →  modal
+```
+
+A user who immediately backs away after the icon appears never sees the more intrusive stages. A user who lingers, or tries to proceed anyway, gets escalated step by step until the warning is impossible to miss.
+
+**Implementation:** a dedicated `behavior-monitor.ts` utility (see Project Structure below) owns the hesitation-tracking and state machine, and calls into the same four static warning renderers to display each stage — Progressive Reveal *composes* the other four conditions rather than duplicating their rendering code.
+
+**Logging:** identical to the other four conditions (`shown` / `dismissed` / `proceeded` / `went-back`), plus the specific escalation stage reached at the time of the final action. This stage-reached data point is what makes Progressive Reveal analyzable against the static conditions later.
 
 ## Project Structure
 
@@ -116,16 +140,21 @@ phish_ext/
   src/
     entrypoints/            # WXT entrypoints
       background.ts         # pipeline orchestrator + domain check
-      content.ts            # DOM extraction + warning UI
-      offscreen/            # canvas pHash + logo matching
-      popup/                # status/settings UI
-    lib/                    # shared types & interfaces
-    utils/                  # shared code (phash, levenshtein, homoglyph)
-    assets/brands/          # bundled reference dataset (generated)
-    components/             # reusable UI components
-  tools/                    # dev-only Python dataset generator (not shipped)
-  public/                   # extension icons and static assets
-  docs/                     # architecture & development docs
+      content.ts             # DOM extraction + warning UI + behavior monitoring hookup
+      offscreen/             # canvas pHash + logo matching
+      popup/                 # status/settings UI
+    lib/                     # shared types & interfaces
+    utils/
+      phash.ts               # Layer 1 — perceptual hashing
+      domain-check.ts         # Layer 2 — homoglyph + allowlist checks
+      brands.ts               # reference dataset loader
+      messaging.ts             # shared message types
+      behavior-monitor.ts      # Progressive Reveal — dwell/mouse tracking + escalation state machine
+    assets/brands/            # bundled reference dataset (generated)
+    components/               # warning renderers: banner, modal, tooltip, icon (reused by Progressive Reveal)
+  tools/                      # dev-only Python dataset generator (not shipped)
+  public/                     # extension icons and static assets
+  docs/                       # architecture & development docs
   wxt.config.ts
 ```
 
@@ -137,6 +166,9 @@ CLIP-style embedding comparison (via `onnxruntime-web`, fully local) for recogni
 
 1. [done] Initialize WXT project (Vanilla TS + pnpm + `src/` layout).
 2. [done] Scaffold entrypoints: `background`, `content`, `offscreen`, `popup`.
-3. Implement the three-layer pipeline in TypeScript (pHash, domain check, DOM localization).
+3. Implement the three-layer detection pipeline in TypeScript (pHash, domain check, DOM localization).
 4. Write the build-time Python dataset generator in `tools/`.
-5. Build warning UI with element highlighting, then add A/B variants and interaction logging.
+5. Build the four static warning renderers (banner, modal, tooltip, icon) with element highlighting.
+6. **Build `behavior-monitor.ts` and wire up Progressive Reveal** — implement hesitation tracking and the icon → highlight → banner → modal escalation state machine, reusing the renderers from step 5. Do this in the same phase as step 5, not as a later add-on.
+7. Add interaction logging across all five conditions (shown / dismissed / proceeded / went-back, plus escalation stage for Progressive Reveal).
+8. Evaluation study: recruit participants, run the between-subjects comparison across all five warning conditions.
