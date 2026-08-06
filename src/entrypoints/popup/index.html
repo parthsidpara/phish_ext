@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>phish_ext</title>
+    <meta name="manifest.type" content="action" />
+  </head>
+  <body>
+    <div id="app">
+      <header>
+        <h1>phish_ext</h1>
+        <div id="status">
+          <span id="status-dot" class="status-idle"></span>
+          <span id="status-label">Idle</span>
+        </div>
+      </header>
+      <section id="stats">
+        <div class="stat">
+          <span class="stat-label">Scans</span>
+          <span class="stat-value" id="scan-count">0</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Threats</span>
+          <span class="stat-value" id="threat-count">0</span>
+        </div>
+      </section>
+      <footer>
+        <small id="version">v0.0.1</small>
+      </footer>
+    </div>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

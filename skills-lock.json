@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "skills": {
+    "commit-pr": {
+      "source": "parthsidpara/lazyskills",
+      "sourceType": "github",
+      "skillPath": "commit-pr/SKILL.md",
+      "computedHash": "02c99e621be3b1f274280f5eb1f1cc5834709d059ec191732bdb3bf4dc84dddb"
+    },
+    "onboard": {
+      "source": "parthsidpara/lazyskills",
+      "sourceType": "github",
+      "skillPath": "onboard/SKILL.md",
+      "computedHash": "fb6190a09e4e897ca503eb0bf33bf70c1f160c06b58be1d9af2fd030c41631cc"
+    }
+  }
+}
