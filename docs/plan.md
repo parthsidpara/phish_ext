@@ -19,7 +19,7 @@ A browser extension that:
 
 - Scans the page you're on and checks it against known real websites using a three-layer detection pipeline (below).
 - If it looks like a fake, shows a warning that explains *why* — highlighting the specific elements that gave it away.
-- Tests **five** warning designs against each other to find which one actually makes people stop and think — including one that *adapts in real time* based on how the user behaves (see Progressive Reveal below). This is the project's core research contribution, not a side feature.
+- Tests **five** warning designs against each other to find which one actually makes people stop and think — including one that *progressively reveals more evidence* the longer the user seems to be ignoring it, adapting in real time to their behavior (see Progressive Reveal below). This is the project's core research contribution, not a side feature.
 
 ## Detection Pipeline
 
@@ -110,28 +110,44 @@ Four static formats plus one adaptive format, evaluated against each other:
 | 2 | **Modal** | Full-screen interceptor, forces an explicit choice before proceeding. |
 | 3 | **Passive Icon** | Small toolbar/badge icon change only, no interruption to the page. |
 | 4 | **Contextual Tooltip** | Warning anchored directly to the password input field. |
-| 5 | **Progressive Reveal** | *Adaptive.* Starts minimal (icon), escalates in real time based on measured user hesitation. |
+| 5 | **Progressive Reveal** | *Adaptive.* Starts with minimal evidence, reveals more of the "why this is fake" reasoning step by step based on measured hesitation; UI container escalates alongside. |
 
 ### Progressive Reveal — how it works
 
-This is the condition that differentiates the project from prior explainable-warning work (e.g. PhishXplain), which tests *what* a warning says but not *how* it's delivered or whether delivery should adapt to the user in the moment.
+This is the condition that differentiates the project from prior explainable-warning work (e.g. PhishXplain), which reveals its full reasoning at once regardless of whether the user is actually paying attention. Progressive Reveal's primary axis is **evidence depth**, not just interruption intensity — it starts with minimal explanation and reveals more of the "why this is fake" reasoning step by step, only escalating further if the user keeps showing signs of ignoring what's already been shown. The UI container (icon → highlight → banner → modal) escalates alongside the evidence as a secondary, coupled effect, but the evidence-depth progression is the core mechanism.
 
-**Signals tracked** (once a page is flagged and the initial low-level warning is showing):
+**Signals tracked** (once a page is flagged and the initial minimal signal is showing):
 - Dwell time since the warning first appeared.
 - Mouse movement toward or away from the credential input field.
 - Repeated focus/typing attempts on the password field while a warning is still active.
 
-**Escalation stages**, advancing when hesitation signals cross defined thresholds:
+**Escalation stages** — each stage reveals one additional piece of evidence, paired with a UI container appropriate to that amount of information:
 
 ```
-icon  →  highlight (flagged element outlined)  →  banner  →  modal
+Stage 1 — Minimal signal, no evidence yet
+  Icon changes only. The system is still "watching" to see if the
+  user notices and backs away on their own.
+
+Stage 2 — First piece of evidence
+  Highlight stage: outline the single most obvious flagged element
+  (e.g. the mismatched logo), with one short reason.
+  e.g. "This page's logo doesn't quite match PayPal's."
+
+Stage 3 — Additional evidence
+  Banner stage: add a second piece of reasoning alongside the first.
+  e.g. "...and you're not on PayPal's actual domain
+  (paypa1-secure.com instead of paypal.com)."
+
+Stage 4 — Full evidence, hard stop
+  Modal stage: reveal the complete reasoning (all flagged elements)
+  and force an explicit decision before the user can proceed.
 ```
 
-A user who immediately backs away after the icon appears never sees the more intrusive stages. A user who lingers, or tries to proceed anyway, gets escalated step by step until the warning is impossible to miss.
+A user who notices and backs away at Stage 1 or 2 never sees the fuller evidence or the more intrusive container — they were never confused enough to need it. A user who keeps heading toward the password field gets progressively more explanation *and* a progressively harder-to-ignore container, in lockstep.
 
-**Implementation:** a dedicated `behavior-monitor.ts` utility (see Project Structure below) owns the hesitation-tracking and state machine, and calls into the same four static warning renderers to display each stage — Progressive Reveal *composes* the other four conditions rather than duplicating their rendering code.
+**Implementation:** a dedicated `behavior-monitor.ts` utility (see Project Structure below) owns the hesitation-tracking and the state machine, and calls into the same four static warning renderers to display each stage's container, parameterized by how much of the `flaggedElements`/`reasoning` payload to reveal at that stage. Progressive Reveal *composes* the other four conditions and the detection pipeline's evidence data rather than duplicating either.
 
-**Logging:** identical to the other four conditions (`shown` / `dismissed` / `proceeded` / `went-back`), plus the specific escalation stage reached at the time of the final action. This stage-reached data point is what makes Progressive Reveal analyzable against the static conditions later.
+**Logging:** identical to the other four conditions (`shown` / `dismissed` / `proceeded` / `went-back`), plus the specific stage reached (i.e. how much evidence the user had been shown) at the time of the final action. This is the data point that lets the evaluation study ask not just "did the warning work" but "how much explanation did it actually take before the user reacted."
 
 ## Project Structure
 
