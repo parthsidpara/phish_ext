@@ -75,6 +75,19 @@ export default defineBackground(() => {
     { url: [{ schemes: ['http', 'https'] }] },
   );
 
+  // ── Demo trigger: keyboard shortcut → highlight current page ──
+  // Ctrl+Shift+H (see wxt.config.ts `commands`) runs the Driver.js highlight
+  // demo against whatever page is active (e.g. the local demo.html portal).
+
+  browser.commands?.onCommand.addListener(async (command) => {
+    if (command !== 'run-highlight-demo') return;
+
+    const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+    if (!tab?.id) return;
+
+    await browser.tabs.sendMessage(tab.id, { type: 'DEMO_HIGHLIGHT' } satisfies ExtensionMessage);
+  });
+
   // ── Listen for messages from content script / offscreen ──
 
   browser.runtime.onMessage.addListener((message: ExtensionMessage) => {

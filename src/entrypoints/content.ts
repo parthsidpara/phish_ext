@@ -1,4 +1,5 @@
 import type { DOMFeatures, DetectedMessage, ExtensionMessage } from '@/lib/types';
+import { demoHighlight, highlightFlaggedElements } from '@/utils/driver-highlight';
 
 export default defineContentScript({
   matches: ['*://*/*'],
@@ -52,7 +53,11 @@ export default defineContentScript({
       //    - Modal dialog
       //    - Tooltip near the password field
       //    - Small icon in the corner
+      //
+      // Driver.js approach: spotlight every flagged element and annotate why it
+      // was flagged, driven off the same `flaggedElements` + `reasoning` payload.
       console.log('[phish_ext] Warning triggered:', result);
+      highlightFlaggedElements(result);
     }
 
     // ── Send DOM features to background on load ──
@@ -69,6 +74,12 @@ export default defineContentScript({
     browser.runtime.onMessage.addListener((message: ExtensionMessage) => {
       if (message.type === 'DETECTED') {
         renderWarning(message.result);
+      }
+      // Demo trigger — lets us test Driver.js highlighting on the local
+      // `demo.html` target site before the detection pipeline is built.
+      if (message.type === 'DEMO_HIGHLIGHT') {
+        console.log('[phish_ext] Running Driver.js highlight demo');
+        demoHighlight();
       }
     });
   },

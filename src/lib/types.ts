@@ -28,10 +28,14 @@ export type FlagReason = 'visual_similarity' | 'domain_mismatch' | 'logo_match' 
 export interface FlaggedElement {
   /** What was flagged */
   element: string;
-  /** Why it was flagged */
+  /** Why it was flagged (internal classification) */
   reason: FlagReason;
   /** Optional CSS selector or bounding box to highlight */
   selector?: string;
+  /** Optional user-facing popover heading (e.g. "Logo appears copied") */
+  title?: string;
+  /** Optional per-element explanation shown in the warning popover */
+  note?: string;
 }
 
 export interface DetectionResult {
@@ -102,10 +106,16 @@ export interface PageReadyMessage {
   features: DOMFeatures;
 }
 
+// background → content (dev/demo trigger for Driver.js highlighting)
+export interface DemoHighlightMessage {
+  type: 'DEMO_HIGHLIGHT';
+}
+
 export type ExtensionMessage =
   | ComputePHashMessage
   | PHashResultMessage
   | MatchLogosMessage
   | LogoMatchResultMessage
   | DetectedMessage
-  | PageReadyMessage;
+  | PageReadyMessage
+  | DemoHighlightMessage;
