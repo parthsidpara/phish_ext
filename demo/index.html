@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign In</title>
+    <style>
+      :root {
+        --brand: #0b5394;
+        --brand-dark: #093c6b;
+        --danger: #d93025;
+        --bg: #eef2f7;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        background: var(--bg);
+        color: #222;
+      }
+
+      header {
+        margin-bottom: 24px;
+        text-align: center;
+      }
+
+      .logo {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--brand);
+      }
+
+      .logo-mark {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
+        background: var(--brand);
+        color: #fff;
+        font-size: 20px;
+      }
+
+      .card {
+        width: 360px;
+        background: #fff;
+        border: 1px solid #d9dfe8;
+        border-radius: 12px;
+        box-shadow: 0 6px 20px rgba(11, 83, 148, 0.08);
+        padding: 24px;
+      }
+
+      .card h1 {
+        margin: 0 0 6px;
+        font-size: 18px;
+      }
+
+      .card .subtitle {
+        margin: 0 0 18px;
+        color: #6b7280;
+        font-size: 13px;
+      }
+
+      .brand-phrase {
+        margin: 0 0 16px;
+        padding: 8px 12px;
+        border-radius: 6px;
+        background: #eef4fb;
+        color: #0b5394;
+        font-size: 12.5px;
+        font-weight: 600;
+        line-height: 1.5;
+      }
+
+      .field {
+        margin-bottom: 14px;
+      }
+
+      .field label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .field input {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font-size: 14px;
+        outline: none;
+      }
+
+      .field input:focus {
+        border-color: var(--brand);
+        box-shadow: 0 0 0 3px rgba(11, 83, 148, 0.15);
+      }
+
+      .actions {
+        margin-top: 18px;
+      }
+
+      .actions button {
+        width: 100%;
+        padding: 11px;
+        border: none;
+        border-radius: 8px;
+        background: var(--brand);
+        color: #fff;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .actions button:hover {
+        background: var(--brand-dark);
+      }
+
+      .trust {
+        margin-top: 14px;
+        text-align: center;
+        font-size: 12px;
+        color: #6b7280;
+      }
+
+      footer {
+        margin-top: 22px;
+        color: #93a1b4;
+        font-size: 12px;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="logo" id="brand-logo">
+        <span class="logo-mark">S</span>
+        <span>DummyBank</span>
+      </div>
+    </header>
+
+    <form class="card" id="login-form">
+      <h1>Sign In</h1>
+      <p class="subtitle">Access your account</p>
+
+      <p class="brand-phrase" id="brand-phrase">
+        Protected by S-Shield — DummyBank&rsquo;s one-time security code program.
+      </p>
+
+      <div class="field">
+        <label for="username">Username or Email</label>
+        <input id="username" name="username" type="text" placeholder="you@example.com" autocomplete="username" />
+      </div>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" placeholder="••••••••" autocomplete="current-password" />
+      </div>
+
+      <div class="actions">
+        <button id="signin-btn" type="submit">Sign In</button>
+      </div>
+
+      <div class="trust">
+        <span id="trust-badge">Powered by DummyBank TLS</span>
+      </div>
+    </form>
+
+    <footer>c. 2026 DummyBank</footer>
+  </body>
+</html>
