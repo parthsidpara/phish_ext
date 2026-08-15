@@ -1,33 +1,46 @@
 import type { ComputePHashMessage, MatchLogosMessage, ExtensionMessage } from '@/lib/types';
+import { computePerceptualHash } from '@/utils/phash';
 
 // ── Canvas-based perceptual hashing (Layer 1) ──
 
 /**
+ * Decode a base64 PNG (either a bare base64 string or a full `data:` URL,
+ * e.g. what `tabs.captureVisibleTab` returns) into a Blob.
+ */
+function base64ToBlob(base64: string, mimeType = 'image/png'): Blob {
+  const encoded = base64.startsWith('data:') ? base64.slice(base64.indexOf(',') + 1) : base64;
+  const binary = atob(encoded);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return new Blob([bytes], { type: mimeType });
+}
+
+/**
  * Compute a DCT-based perceptual hash of an image.
  *
- * Algorithm outline:
- * 1. Decode the base64 PNG → ImageBitmap
- * 2. Draw onto offscreen canvas, resize to 32×32 grayscale
- * 3. Compute 2D DCT (Discrete Cosine Transform) on the 32×32 pixel matrix
- * 4. Take the top-left 8×8 of the DCT result (low-frequency coefficients)
- * 5. Compare each coefficient against the median → 64-bit binary string
- * 6. Return the hex-encoded hash
+ * The actual DCT/hashing algorithm lives in `src/utils/phash.ts` as plain,
+ * canvas-free TypeScript (so it's independently testable). This function's
+ * only job is the canvas-specific part only an offscreen document can do:
+ * decode the screenshot bytes into pixels.
  *
  * Comparison: two hashes are "close" if Hamming distance <= threshold.
- * Typical thresholds: < 5 for 64-bit pHash, < 10 for 256-bit variants.
+ * Typical thresholds: < 5 for a 64-bit pHash.
  */
 async function computePHash(imageData: string): Promise<string> {
-  // TODO: Implement DCT-based pHash
-  // 1. const blob = base64ToBlob(imageData, 'image/png');
-  // 2. const bitmap = await createImageBitmap(blob);
-  // 3. Draw to canvas, resize to 32x32, convert to grayscale
-  // 4. Compute 2D DCT (requires a DCT implementation or use FFT-based approach)
-  // 5. Extract 8x8 low-frequency block
-  // 6. Binary thresholding against median -> 64-bit hash
-  // 7. Return hex string
+  const blob = base64ToBlob(imageData);
+  const bitmap = await createImageBitmap(blob);
 
-  console.log('[phish_ext:offscreen] pHash requested');
-  return '';
+  const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+  const ctx = canvas.getContext('2d');
+  if (!ctx) {
+    console.error('[phish_ext:offscreen] Failed to get 2D canvas context');
+    return '';
+  }
+
+  ctx.drawImage(bitmap, 0, 0);
+  const pixels = ctx.getImageData(0, 0, bitmap.width, bitmap.height);
+
+  return computePerceptualHash(pixels);
 }
 
 // ── Logo template matching (Layer 3) ──

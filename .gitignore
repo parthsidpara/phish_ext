@@ -29,3 +29,9 @@ stuff/
 *.sw?
 
 CLAUDE.md
+
+# Real screenshots for manual pHash testing (scripts/test-phash.ts) — often
+# real third-party brand pages, not something to commit. Keep the folder
+# and its README, ignore the images themselves.
+test-images/*
+!test-images/README.md
