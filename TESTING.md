@@ -1,6 +1,12 @@
 # Testing Guide — phash.ts Validation
 
-This doc is for picking up where I left off: Layer 1 (perceptual hashing) is implemented and passes both a synthetic self-check and a real-screenshot validation. Your job is to (a) get it running on your machine, and (b) stress-test it further with more real-world screenshot pairs before we move to Step 2 (the Python dataset generator).
+This doc covers how to validate Layer 1 (perceptual hashing). The implementation
+passes both a synthetic self-check and a real-screenshot validation; this guide
+is how to re-run it and stress-test the `<= 5` Hamming-distance threshold with
+more real-world screenshot pairs. The dataset generator that Layer 1 compares
+against at runtime now exists in `tools/` (see `tools/README.md`); the
+`test-images/` workflow below is for validating the hashing threshold itself,
+independent of the dataset.
 
 ---
 
@@ -55,7 +61,8 @@ If `test-images/` is empty, the real-image section will fail or skip — that's 
 
 ## 5. Add your own real screenshot pairs
 
-This is the actual task: **capture 2-3 more site pairs beyond what I already tested**, to make sure the `≤5` threshold (from `docs/architecture.md`) holds up generally, not just for one lucky sample.
+The goal here is to stress-test the `≤5` threshold (from `docs/architecture.md`)
+against a few real site pairs, not just one sample.
 
 For each pair, you need three files in `test-images/`:
 
@@ -82,17 +89,21 @@ pnpm test:phash
 
 ## 6. What "pass" looks like
 
-- `Hamming(same-1, same-2)` should be **comfortably ≤5** (my run got 2 — yours should land somewhere in a similar low range, single digits at most).
+- `Hamming(same-1, same-2)` should be **comfortably ≤5** (recent runs landed at 0–2 — single digits at most).
 - `Hamming(same-1, different)` should be **clearly larger** — expect somewhere in the 25-40 range.
 - There should be a large, obvious gap between the two numbers — no case where a "same page" pair creeps close to a "different page" pair.
 
-**If any same-page pair comes back higher than 5** (especially with the video-background page), note it down with the exact numbers and site used — that's a real signal we may need to either loosen the threshold slightly or improve capture consistency (e.g. waiting for video to reach a consistent frame before capturing). Don't just re-run until you get a good number — a bad number is useful data, not a failure to hide.
+**If any same-page pair comes back higher than 5** (especially with a video-background page), note it down with the exact numbers and site used — that's a real signal we may need to either loosen the threshold slightly or improve capture consistency (e.g. waiting for video to reach a consistent frame before capturing). Don't just re-run until you get a good number — a bad number is useful data, not a failure to hide.
 
 ## 7. Report back
 
 Once you've run a few pairs, share:
+
 - The exact Hamming distances for each pair you tested.
 - Which sites you used.
 - Anything that looked off (e.g. a same-page pair with an unexpectedly high distance).
 
-Once we're both confident the threshold holds up across a few different real sites, we move to **Step 2: the Python dataset generator** (`tools/`), which is what actually builds the ~15-page brand reference set that Layer 1 will compare against in the real pipeline.
+The reference hashes the extension compares against at runtime are built by the
+dataset generator in `tools/` (see `tools/README.md`), which captures brand pages
+at fixed viewports — its hashes come from the same `src/utils/phash.ts` code
+path, so a threshold that holds here transfers to the real pipeline.

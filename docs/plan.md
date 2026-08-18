@@ -27,7 +27,7 @@ The detector combines three independent checks. Each catches cases the others mi
 
 ### Layer 1 — Visual similarity (perceptual hashing)
 
-On page load, capture the visible page and generate a perceptual hash (pHash, DCT-based). Compare against a pre-built reference set of ~15 real brand login pages. A close hash match means "this looks like Brand X."
+On page load, capture the visible page and generate a perceptual hash (pHash, DCT-based). Compare against a pre-built reference set of 7 real brand login pages (target ~15). A close hash match means "this looks like Brand X."
 
 - Catches attacker pages copied pixel-for-pixel.
 - Fast (<50 ms) and cheap.
@@ -72,14 +72,17 @@ The Python tools are **development-only** and never ship with the extension.
 
 ### Build time (Python, dev only)
 
-A dataset-generation script captures the ~15 brand login pages and precomputes:
+A dataset-generation script (`tools/generate.py`) captures the brand login pages at three viewports
+(1280x800 / 1366x768 / 1920x1080) and precomputes:
 
-- pHash of each brand login page (using `imagehash`).
-- Logo templates (cropped, downscaled, encoded as base64).
-- Brand color palettes.
-- Domain allowlists and lookalike/homoglyph rules.
+- pHash of each brand login page, computed via `scripts/hash-png.ts` — the *exact* runtime
+  implementation (`src/utils/phash.ts`), so hashes transfer bit-for-bit.
+- Logo templates (cropped, downscaled, encoded as base64) — deferred until the Layer 3 logo pipeline.
+- Brand color palettes and keywords (extracted from the live DOM).
+- Domain allowlists and lookalike/homoglyph rules (manual, in `tools/config.json`).
 
-Output: `assets/brands/brands.json` — a few MB total, bundled into the extension. No runtime dependency on Python, OpenCV, or any server.
+Output: `assets/brands/brands.json` — ~8 KB (7 brands), bundled into the extension. No runtime
+dependency on Python, OpenCV, or any server. See `tools/README.md` for usage.
 
 ### Runtime (100% in-extension)
 
@@ -114,7 +117,7 @@ Four static formats plus one adaptive format, evaluated against each other:
 
 ### Progressive Reveal — how it works
 
-This is the condition that differentiates the project from prior explainable-warning work (e.g. PhishXplain), which reveals its full reasoning at once regardless of whether the user is actually paying attention. Progressive Reveal's primary axis is **evidence depth**, not just interruption intensity — it starts with minimal explanation and reveals more of the "why this is fake" reasoning step by step, only escalating further if the user keeps showing signs of ignoring what's already been shown. The UI container (icon → highlight → banner → modal) escalates alongside the evidence as a secondary, coupled effect, but the evidence-depth progression is the core mechanism.
+This is the condition that differentiates the project from prior explainable-warning work (e.g. PhishXplain), which reveals its full reasoning at once regardless of whether the user is actually paying attention. Progressive Reveal's primary axis is **evidence depth**, not just interruption intensity — it starts with minimal explanation and reveals more of the "why this is fake" reasoning step by step, only escalating further if the user keeps showing signs of ignoring what's already been shown. The UI container (icon → banner+highlight → banner → modal) escalates alongside the evidence as a secondary, coupled effect, but the evidence-depth progression is the core mechanism.
 
 **Signals tracked** (once a page is flagged and the initial minimal signal is showing):
 - Dwell time since the warning first appeared.
@@ -129,14 +132,18 @@ Stage 1 — Minimal signal, no evidence yet
   user notices and backs away on their own.
 
 Stage 2 — First piece of evidence
-  Highlight stage: outline the single most obvious flagged element
-  (e.g. the mismatched logo), with one short reason.
-  e.g. "This page's logo doesn't quite match PayPal's."
+  Banner stage with the flagged element highlighted: outline the single most
+  obvious flagged element (when Layer 3 supplies a CSS selector) alongside a
+  short reason.
+  e.g. "This page's domain isn't an official PayPal domain."
+  (Until Layer 3 provides selectors, the highlight is a no-op and the banner
+  carries the first evidence piece on its own.)
 
 Stage 3 — Additional evidence
   Banner stage: add a second piece of reasoning alongside the first.
-  e.g. "...and you're not on PayPal's actual domain
-  (paypa1-secure.com instead of paypal.com)."
+  e.g. "...and the page's logo doesn't match PayPal's."
+  (Currently only the domain flag exists, so the banner re-states the revealed
+  evidence until Layer 3 enriches the flags.)
 
 Stage 4 — Full evidence, hard stop
   Modal stage: reveal the complete reasoning (all flagged elements)
@@ -145,7 +152,7 @@ Stage 4 — Full evidence, hard stop
 
 A user who notices and backs away at Stage 1 or 2 never sees the fuller evidence or the more intrusive container — they were never confused enough to need it. A user who keeps heading toward the password field gets progressively more explanation *and* a progressively harder-to-ignore container, in lockstep.
 
-**Implementation:** a dedicated `behavior-monitor.ts` utility (see Project Structure below) owns the hesitation-tracking and the state machine, and calls into the same four static warning renderers to display each stage's container, parameterized by how much of the `flaggedElements`/`reasoning` payload to reveal at that stage. Progressive Reveal *composes* the other four conditions and the detection pipeline's evidence data rather than duplicating either.
+**Implementation:** a dedicated `behavior-monitor.ts` utility (see Project Structure below) owns the hesitation-tracking and the state machine, and calls into the banner/modal/icon renderers to display each stage's container, parameterized by how much of the `flaggedElements`/`reasoning` payload to reveal at that stage. Progressive Reveal *composes* the static renderers and the detection pipeline's evidence data rather than duplicating either.
 
 **Logging:** identical to the other four conditions (`shown` / `dismissed` / `proceeded` / `went-back`), plus the specific stage reached (i.e. how much evidence the user had been shown) at the time of the final action. This is the data point that lets the evaluation study ask not just "did the warning work" but "how much explanation did it actually take before the user reacted."
 
@@ -155,20 +162,26 @@ A user who notices and backs away at Stage 1 or 2 never sees the fuller evidence
 phish_ext/
   src/
     entrypoints/            # WXT entrypoints
-      background.ts         # pipeline orchestrator + domain check
-      content.ts             # DOM extraction + warning UI + behavior monitoring hookup
-      offscreen/             # canvas pHash + logo matching
-      popup/                 # status/settings UI
-    lib/                     # shared types & interfaces
+      background.ts         # pipeline orchestrator + domain check (Layer 2)
+      content.ts            # DOM extraction (Layer 3, partial) + warning UI dispatch
+      offscreen/            # canvas pHash (Layer 1) + logo matching (Layer 3, stub)
+      popup/                # status/settings UI + warning-condition selector
+    lib/                    # shared types & interfaces
+      types.ts              # data models + message types
+      conditions.ts         # warning-condition selection (banner/modal/tooltip/icon/progressive)
     utils/
-      phash.ts               # Layer 1 — perceptual hashing
-      domain-check.ts         # Layer 2 — homoglyph + allowlist checks
-      brands.ts               # reference dataset loader
-      messaging.ts             # shared message types
-      behavior-monitor.ts      # Progressive Reveal — dwell/mouse tracking + escalation state machine
-    assets/brands/            # bundled reference dataset (generated)
-    components/               # warning renderers: banner, modal, tooltip, icon (reused by Progressive Reveal)
-  tools/                      # dev-only Python dataset generator (not shipped)
+      phash.ts               # Layer 1 — perceptual hashing (pure TS)
+      domain-check.ts        # Layer 2 — homoglyph + allowlist checks
+      brands.ts              # reference dataset loader (cached)
+      messaging.ts           # shared message types
+      driver-highlight.ts    # Driver.js evidence tour over flagged elements
+      interaction-log.ts     # warning interaction logging (storage.local)
+      behavior-monitor.ts    # Progressive Reveal — dwell/mouse tracking + escalation state machine
+    assets/brands/           # bundled reference dataset (generated by tools/)
+    components/
+      renderers/             # warning renderers: banner, modal, tooltip, icon (banner/modal/icon reused by Progressive Reveal)
+  tools/                      # dev-only dataset generator (Python, not shipped) — see tools/README.md
+  scripts/                    # dev utilities (hash-png.ts, test-phash.ts)
   public/                     # extension icons and static assets
   docs/                       # architecture & development docs
   wxt.config.ts
@@ -182,9 +195,26 @@ CLIP-style embedding comparison (via `onnxruntime-web`, fully local) for recogni
 
 1. [done] Initialize WXT project (Vanilla TS + pnpm + `src/` layout).
 2. [done] Scaffold entrypoints: `background`, `content`, `offscreen`, `popup`.
-3. Implement the three-layer detection pipeline in TypeScript (pHash, domain check, DOM localization).
-4. Write the build-time Python dataset generator in `tools/`.
-5. Build the four static warning renderers (banner, modal, tooltip, icon) with element highlighting.
-6. **Build `behavior-monitor.ts` and wire up Progressive Reveal** — implement hesitation tracking and the icon → highlight → banner → modal escalation state machine, reusing the renderers from step 5. Do this in the same phase as step 5, not as a later add-on.
-7. Add interaction logging across all five conditions (shown / dismissed / proceeded / went-back, plus escalation stage for Progressive Reveal).
-8. Evaluation study: recruit participants, run the between-subjects comparison across all five warning conditions.
+3. [in progress] Implement the three-layer detection pipeline in TypeScript
+   (pHash, domain check, DOM localization).
+   - Layer 1 (pHash) — done + validated (`pnpm test:phash`).
+   - Layer 2 (domain legitimacy) — done + wired into the pipeline.
+   - Layer 3 (DOM localization) — DOM-feature extraction stub only; logo
+     template matching + verdict wiring pending.
+4. [done] Write the build-time dataset generator in `tools/` (Playwright capture
+   at three viewports, hashes via the exact runtime `phash.ts`). Dataset currently
+   has 7 brands against a ~15 target.
+5. [done] Build the four static warning renderers (banner, modal, tooltip, icon)
+   with element highlighting + condition switching (popup selector,
+   `storage.local['phish_condition']`).
+6. [done] Build `behavior-monitor.ts` and wire up Progressive Reveal —
+   hesitation tracking (dwell timer + cursor proximity to the credential field
+   + focus/typing signals) and the icon → banner+highlight → banner → modal
+   escalation state machine, reusing the renderers from step 5. Logs `escalated`
+   events with the stage reached.
+7. [done] Add interaction logging across all five conditions (shown / dismissed /
+   proceeded / went-back, plus escalation stage for Progressive Reveal). Base
+   logging for the four static conditions is done; per-stage logging for
+   Progressive Reveal is done via the `escalated` event + `stage` field.
+8. Evaluation study: recruit participants, run the between-subjects comparison
+   across all five warning conditions.
