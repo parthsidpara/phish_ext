@@ -35,3 +35,10 @@ CLAUDE.md
 # and its README, ignore the images themselves.
 test-images/*
 !test-images/README.md
+
+# Screenshots captured by the Python dataset generator (tools/generate.py) —
+# real third-party brand pages. Keep the folder, ignore the images.
+tools/captures/*
+
+# Python virtualenv for the dataset generator.
+tools/.venv/

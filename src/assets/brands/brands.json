@@ -1,0 +1,249 @@
+[
+  {
+    "id": "dummybank",
+    "name": "DummyBank",
+    "phash": "b399cc668ccc6699",
+    "phashByViewport": {
+      "1280x800": "b399cc668ccc6699",
+      "1366x768": "b399cc6698cc669c",
+      "1920x1080": "b399cc6699992633"
+    },
+    "phashThreshold": 5,
+    "allowedDomains": [
+      "dummybank.com"
+    ],
+    "protectedBrands": [
+      "dummybank"
+    ],
+    "colors": [
+      "#eef2f7"
+    ],
+    "keywords": [
+      "dummybank",
+      "access",
+      "account",
+      "protected",
+      "shield",
+      "one",
+      "time",
+      "security",
+      "code",
+      "program",
+      "username",
+      "email"
+    ],
+    "logoTemplate": ""
+  },
+  {
+    "id": "github",
+    "name": "GitHub",
+    "phash": "b333c98e6666cc98",
+    "phashByViewport": {
+      "1280x800": "b333c98e6666cc98",
+      "1366x768": "b333c98e6666c899",
+      "1920x1080": "b3338998cce66666"
+    },
+    "phashThreshold": 5,
+    "allowedDomains": [
+      "github.com"
+    ],
+    "protectedBrands": [
+      "github"
+    ],
+    "colors": [
+      "#ffffff"
+    ],
+    "keywords": [
+      "github",
+      "password",
+      "continue",
+      "skip",
+      "content",
+      "username",
+      "email",
+      "address",
+      "forgot",
+      "google",
+      "apple",
+      "create"
+    ],
+    "logoTemplate": ""
+  },
+  {
+    "id": "shopify",
+    "name": "Shopify",
+    "phash": "9b3064ce649b9b33",
+    "phashByViewport": {
+      "1280x800": "9b3064ce649b9b33",
+      "1366x768": "9b2064ce669b9b93",
+      "1920x1080": "99996666cc663399"
+    },
+    "phashThreshold": 5,
+    "allowedDomains": [
+      "shopify.com",
+      "myshopify.com"
+    ],
+    "protectedBrands": [
+      "shopify"
+    ],
+    "colors": [
+      "#0a1314"
+    ],
+    "keywords": [
+      "continue",
+      "shopify",
+      "account",
+      "email",
+      "password",
+      "passkey",
+      "google",
+      "apple",
+      "facebook",
+      "whatsapp",
+      "started",
+      "need"
+    ],
+    "logoTemplate": ""
+  },
+  {
+    "id": "vtop",
+    "name": "VTOP",
+    "phash": "9f634838185d5d5d",
+    "phashByViewport": {
+      "1280x800": "9f634838185d5d5d",
+      "1366x768": "9f634a380d5d595c",
+      "1920x1080": "bf40783f053f013e"
+    },
+    "phashThreshold": 5,
+    "allowedDomains": [
+      "vit.ac.in"
+    ],
+    "protectedBrands": [
+      "vtop"
+    ],
+    "colors": [
+      "#ffffff",
+      "#f8f9fa"
+    ],
+    "keywords": [
+      "world",
+      "india",
+      "vit",
+      "ranked",
+      "top",
+      "university",
+      "ranking",
+      "rankings",
+      "within",
+      "thin",
+      "app",
+      "vtop"
+    ],
+    "logoTemplate": ""
+  },
+  {
+    "id": "linkedin",
+    "name": "LinkedIn",
+    "phash": "b38b27898c27ce66",
+    "phashByViewport": {
+      "1280x800": "b38b27898c27ce66",
+      "1366x768": "b389278d8e27cc66",
+      "1920x1080": "b39b8d23318c6637"
+    },
+    "phashThreshold": 5,
+    "allowedDomains": [
+      "linkedin.com"
+    ],
+    "protectedBrands": [
+      "linkedin"
+    ],
+    "colors": [
+      "#f4f2ee"
+    ],
+    "keywords": [
+      "linkedin",
+      "policy",
+      "user",
+      "agreement",
+      "privacy",
+      "cookie",
+      "password",
+      "notifications",
+      "join",
+      "now",
+      "apple",
+      "continuing"
+    ],
+    "logoTemplate": ""
+  },
+  {
+    "id": "dropbox",
+    "name": "Dropbox",
+    "phash": "b3cc1966991e6699",
+    "phashByViewport": {
+      "1280x800": "b3cc1966991e6699",
+      "1366x768": "b3ce1966990e6699",
+      "1920x1080": "b6c19c639c8d720f"
+    },
+    "phashThreshold": 5,
+    "allowedDomains": [
+      "dropbox.com"
+    ],
+    "protectedBrands": [
+      "dropbox"
+    ],
+    "colors": [
+      "#ffffff"
+    ],
+    "keywords": [
+      "dropbox",
+      "continue",
+      "resources",
+      "free",
+      "app",
+      "features",
+      "send",
+      "cloud",
+      "partners",
+      "apple",
+      "microsoft",
+      "email"
+    ],
+    "logoTemplate": ""
+  },
+  {
+    "id": "idfcfirstbank",
+    "name": "IDFC First Bank",
+    "phash": "bb00ef8945bed5c0",
+    "phashByViewport": {
+      "1280x800": "bb60af855b8784aa",
+      "1366x768": "bb20af85fb84a0ea",
+      "1920x1080": "ba00ef8f45fbc580"
+    },
+    "phashThreshold": 5,
+    "allowedDomains": [
+      "idfcfirst.bank.in"
+    ],
+    "protectedBrands": [
+      "idfcfirstbank"
+    ],
+    "colors": [
+      "#ffffff"
+    ],
+    "keywords": [
+      "account",
+      "credit",
+      "cards",
+      "savings",
+      "first",
+      "card",
+      "bank",
+      "accounts",
+      "msme",
+      "business",
+      "service",
+      "loans"
+    ],
+    "logoTemplate": ""
+  }
+]
