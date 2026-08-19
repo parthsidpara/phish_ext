@@ -7,6 +7,9 @@ export interface BrandReference {
   name: string;
   /** Pre-computed perceptual hash of the real login page */
   phash: string;
+  /** Optional pHash per capture viewport, keyed e.g. "1280x800". Layer 1
+   *  compares against the closest viewport to tolerate window-size drift. */
+  phashByViewport?: Record<string, string>;
   /** Hamming-distance threshold for a "close" match (<= 5 for pHash) */
   phashThreshold: number;
   /** List of legitimate domains (e.g. ["paypal.com", "paypalobjects.com"]) */
@@ -106,9 +109,14 @@ export interface PageReadyMessage {
   features: DOMFeatures;
 }
 
-// background → content (dev/demo trigger for Driver.js highlighting)
-export interface DemoHighlightMessage {
-  type: 'DEMO_HIGHLIGHT';
+// content → background (warning banner actions)
+export interface GoBackMessage {
+  type: 'GO_BACK';
+}
+
+// popup → background (re-run the pipeline on the active tab after a condition change)
+export interface RescanMessage {
+  type: 'RESCAN';
 }
 
 export type ExtensionMessage =
@@ -118,4 +126,5 @@ export type ExtensionMessage =
   | LogoMatchResultMessage
   | DetectedMessage
   | PageReadyMessage
-  | DemoHighlightMessage;
+  | GoBackMessage
+  | RescanMessage;

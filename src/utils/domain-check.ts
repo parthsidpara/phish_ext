@@ -25,7 +25,7 @@
  * Implementation: standard dynamic programming O(n·m).
  */
 
-export {};
+import type { BrandReference } from '@/lib/types';
 
 /**
  * Compute Levenshtein edit distance between two strings.
@@ -114,4 +114,85 @@ export function checkDomain(
   }
 
   return null;
+}
+
+// ── Layer 2: full domain-legitimacy check for a matched brand ──
+
+export interface DomainCheckResult {
+  isSuspicious: boolean;
+  /** Parsed hostname of the checked URL (lowercased). */
+  hostname: string;
+  /** Internal classification when suspicious. */
+  flagReason?: 'domain_mismatch' | 'typosquatting';
+  /** User-facing explanation. */
+  reason?: string;
+  /** The allowed domain the page's hostname is suspiciously close to, if any. */
+  matchedAllowedDomain?: string;
+}
+
+/**
+ * Check whether the hostname of `url` is legitimate for the given brand.
+ * Runs in the background service worker — pure string operations, testable in
+ * isolation (no browser APIs).
+ *
+ * Semantics (Layer 2 of the detection pipeline):
+ * - **Exact match**, or a **subdomain** of an allowed domain → safe
+ *   (e.g. `www.paypal.com`, `login.paypal.com`).
+ * - **Homoglyph / typosquat** of an allowed domain (reuses `checkDomain`,
+ *   Levenshtein distance ≤ 2) → suspicious (e.g. `paypa1.com`).
+ * - **Anything else** → suspicious: the page is branded as the target brand
+ *   but hosted on a domain the brand doesn't officially use.
+ */
+export function checkDomainLegitimacy(
+  url: string,
+  brand: Pick<BrandReference, 'allowedDomains'>,
+): DomainCheckResult {
+  let hostname: string;
+  try {
+    hostname = new URL(url).hostname.toLowerCase();
+    // Ignore trailing-dot root references (effectively the same host).
+    if (hostname.endsWith('.')) hostname = hostname.slice(0, -1);
+  } catch {
+    hostname = '';
+  }
+
+  if (!hostname) {
+    return {
+      isSuspicious: true,
+      hostname,
+      flagReason: 'domain_mismatch',
+      reason: 'The page domain could not be determined.',
+    };
+  }
+
+  const allowed = brand.allowedDomains.map((d) => d.toLowerCase());
+
+  // 1. Allowlist: exact match or subdomain of an allowed domain → safe.
+  const isOfficial = allowed.some((d) => hostname === d || hostname.endsWith(`.${d}`));
+  if (isOfficial) {
+    return { isSuspicious: false, hostname };
+  }
+
+  // 2. Homoglyph / typosquatting lookalike of an allowed domain.
+  const lookalike = checkDomain(hostname, allowed); // maxLevenshtein defaults to 2
+  if (lookalike) {
+    const isHomoglyph = lookalike.reason === 'homoglyph';
+    return {
+      isSuspicious: true,
+      hostname,
+      flagReason: 'typosquatting',
+      matchedAllowedDomain: lookalike.matched,
+      reason: isHomoglyph
+        ? `It uses visually similar characters to the official "${lookalike.matched}" domain.`
+        : `It is close to the official "${lookalike.matched}" domain (within a couple of characters).`,
+    };
+  }
+
+  // 3. Otherwise: branded page on an unofficial domain.
+  return {
+    isSuspicious: true,
+    hostname,
+    flagReason: 'domain_mismatch',
+    reason: `Official domains: ${allowed.join(', ')}.`,
+  };
 }

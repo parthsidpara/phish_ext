@@ -77,6 +77,30 @@ h1 {
   color: #cdd6f4;
 }
 
+#condition {
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+#condition label {
+  font-size: 12px;
+  color: #a6adc8;
+}
+
+#condition select {
+  flex: 1;
+  background: #313244;
+  color: #cdd6f4;
+  border: 1px solid #45475a;
+  border-radius: 6px;
+  padding: 4px 6px;
+  font-size: 12px;
+  font-family: inherit;
+}
+
 footer {
   text-align: center;
 }

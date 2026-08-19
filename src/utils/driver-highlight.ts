@@ -74,7 +74,8 @@ export function highlightFlaggedElements(result: DetectionResult): void {
 
   const flagged = result.flaggedElements.filter((f) => f.selector);
   if (flagged.length === 0) {
-    console.warn('[phish_ext] No flagable elements to highlight.', result);
+    // Expected until Layer 3 supplies CSS selectors — not an error.
+    console.debug('[phish_ext] No selector-bearing flagged elements to highlight:', result.matchedBrand);
     return;
   }
 
@@ -97,56 +98,5 @@ export function highlightFlaggedElements(result: DetectionResult): void {
   });
 
   activeHighlight.drive();
-}
-
-/**
- * Demo mode — fabricates a sample verdict against `demo.html` (the local
- * target portal site) so we can see Driver.js highlighting in action before
- * the real detection pipeline exists.
- *
- * Targets real elements by their stable selectors on the demo page.
- */
-export function demoHighlight(): void {
-  const flagged: FlaggedElement[] = [
-    {
-      element: 'brand-logo',
-      reason: 'logo_match',
-      selector: '#brand-logo',
-      title: 'Logo appears copied',
-      note:
-        'This logo closely matches DummyBank\u2019s official mark, but it is being served ' +
-        'from this page rather than from DummyBank.com. Copying a familiar logo is one of ' +
-        'the most common ways a fake login page builds trust.',
-    },
-    {
-      element: 'sign-in-form',
-      reason: 'form_layout',
-      selector: '#login-form',
-      title: 'Familiar sign-in layout',
-      note:
-        'The arrangement of the logo, the username and password fields, and the blue Sign In ' +
-        'button reproduces DummyBank\u2019s real login page layout. Layout imitation on its own ' +
-        'is not conclusive, but combined with the other signals it raises the risk score.',
-    },
-    {
-      element: 'brand-phrase',
-      reason: 'brand_keywords',
-      selector: '#brand-phrase',
-      title: 'Brand-specific wording reused',
-      note:
-        'This exact wording — naming \u201CS-Shield\u201D, DummyBank\u2019s one-time security code ' +
-        'program — appears on official DummyBank pages. Finding DummyBank-unique phrasing here ' +
-        'is a strong signal the page reused the target brand\u2019s own text.',
-    },
-  ];
-
-  highlightFlaggedElements({
-    riskScore: 0.82,
-    matchedBrand: 'DummyBank',
-    flaggedElements: flagged,
-    reasoning:
-      'This page reproduces DummyBank\u2019s logo, sign-in layout, and sign-in wording, ' +
-      'but the domain DummyBank-login.xyz is not an official DummyBank domain.',
-  });
 }
 

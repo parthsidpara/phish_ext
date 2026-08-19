@@ -1,0 +1,68 @@
+{
+  "viewports": [
+    { "width": 1280, "height": 800 },
+    { "width": 1366, "height": 768 },
+    { "width": 1920, "height": 1080 }
+  ],
+  "brands": [
+    {
+      "id": "dummybank",
+      "name": "DummyBank",
+      "url": "http://127.0.0.1:8000/",
+      "allowedDomains": [
+        "dummybank.com"
+      ],
+      "waitForSelector": "input[type=\"password\"]"
+    },
+    {
+      "id": "github",
+      "name": "GitHub",
+      "url": "https://github.com/login",
+      "allowedDomains": [
+        "github.com"
+      ],
+      "waitForSelector": "input[type=\"password\"]"
+    },
+    {
+      "id": "shopify",
+      "name": "Shopify",
+      "url": "https://accounts.shopify.com/lookup",
+      "allowedDomains": [
+        "shopify.com",
+        "myshopify.com"
+      ]
+    },
+    {
+      "id": "vtop",
+      "name": "VTOP",
+      "url": "https://vtopcc.vit.ac.in/vtop/open/page",
+      "allowedDomains": [
+        "vit.ac.in"
+      ]
+    },
+    {
+      "id": "linkedin",
+      "name": "LinkedIn",
+      "url": "https://www.linkedin.com/login",
+      "allowedDomains": [
+        "linkedin.com"
+      ]
+    },
+    {
+      "id": "dropbox",
+      "name": "Dropbox",
+      "url": "https://www.dropbox.com/login",
+      "allowedDomains": [
+        "dropbox.com"
+      ]
+    },
+    {
+      "id": "idfcfirstbank",
+      "name": "IDFC First Bank",
+      "url": "https://www.idfcfirst.bank.in/",
+      "allowedDomains": [
+        "idfcfirst.bank.in"
+      ]
+    }
+  ]
+}

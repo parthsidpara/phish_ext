@@ -1,5 +1,9 @@
 import type { DOMFeatures, DetectedMessage, ExtensionMessage } from '@/lib/types';
-import { demoHighlight, highlightFlaggedElements } from '@/utils/driver-highlight';
+import { logInteraction } from '@/utils/interaction-log';
+import { highlightFlaggedElements } from '@/utils/driver-highlight';
+import { startProgressiveReveal, type ProgressiveRevealHandle } from '@/utils/behavior-monitor';
+import { renderers, type Renderer } from '@/components/renderers';
+import { getActiveCondition } from '@/lib/conditions';
 
 export default defineContentScript({
   matches: ['*://*/*'],
@@ -37,27 +41,65 @@ export default defineContentScript({
       };
     }
 
-    // ── Warning overlay renderer ──
+    // ── Warning rendering (condition dispatch) ──
+    // Renders the active warning condition (banner/modal/tooltip/icon) or the
+    // adaptive Progressive Reveal session, and logs every user action.
+
+    let activeRenderer: Renderer | null = null;
+    let activeMonitor: ProgressiveRevealHandle | null = null;
 
     function renderWarning(result: DetectedMessage['result']): void {
-      // TODO: Render the warning UI based on DetectionResult
-      // 1. Create an overlay/banner element
-      // 2. Display the reasoning text prominently
-      // 3. For each flaggedElement with a selector, highlight that element
-      //    (e.g. add a red border, or dim the rest of the page)
-      // 4. Provide action buttons: "Go Back", "Proceed Anyway", "Report as Safe"
-      // 5. Log the interaction (shown → dismissed/proceeded/went-back)
-      //    → store in browser.storage.local for later analysis
-      // 6. Different warning variants to test:
-      //    - Full-page interceptor banner
-      //    - Modal dialog
-      //    - Tooltip near the password field
-      //    - Small icon in the corner
-      //
-      // Driver.js approach: spotlight every flagged element and annotate why it
-      // was flagged, driven off the same `flaggedElements` + `reasoning` payload.
       console.log('[phish_ext] Warning triggered:', result);
-      highlightFlaggedElements(result);
+      if (result.riskScore > 0.5) {
+        void showWarning(result);
+      }
+    }
+
+    async function showWarning(result: DetectedMessage['result']): Promise<void> {
+      const condition = await getActiveCondition();
+      console.log('[phish_ext] Rendering warning (condition:', condition + ')');
+      await logInteraction('shown', result, window.location.href, condition);
+
+      activeRenderer?.destroy();
+      activeRenderer = null;
+      activeMonitor?.destroy();
+      activeMonitor = null;
+
+      // Progressive Reveal is a session (state machine + listeners), not a
+      // single renderer.
+      if (condition === 'progressive') {
+        activeMonitor = startProgressiveReveal(result, condition, window.location.href);
+        return;
+      }
+
+      activeRenderer = renderers[condition]();
+      activeRenderer.show(result, {
+        onGoBack: () => {
+          activeRenderer?.destroy();
+          void logInteraction('went-back', result, window.location.href, condition);
+          browser.runtime
+            .sendMessage({ type: 'GO_BACK' } satisfies ExtensionMessage)
+            .catch(() => {});
+        },
+        onProceed: () => {
+          activeRenderer?.destroy();
+          void logInteraction('proceeded', result, window.location.href, condition);
+        },
+        onDismiss: () => {
+          activeRenderer?.destroy();
+          void logInteraction('dismissed', result, window.location.href, condition);
+        },
+      });
+
+      // The Driver.js evidence tour complements banner/icon; modal and tooltip
+      // anchor their own elements. Skips the no-op until flags carry selectors
+      // (Layer 3).
+      if (
+        (condition === 'banner' || condition === 'icon') &&
+        result.flaggedElements.some((f) => f.selector)
+      ) {
+        highlightFlaggedElements(result);
+      }
     }
 
     // ── Send DOM features to background on load ──
@@ -74,12 +116,6 @@ export default defineContentScript({
     browser.runtime.onMessage.addListener((message: ExtensionMessage) => {
       if (message.type === 'DETECTED') {
         renderWarning(message.result);
-      }
-      // Demo trigger — lets us test Driver.js highlighting on the local
-      // `demo.html` target site before the detection pipeline is built.
-      if (message.type === 'DEMO_HIGHLIGHT') {
-        console.log('[phish_ext] Running Driver.js highlight demo');
-        demoHighlight();
       }
     });
   },
