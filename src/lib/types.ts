@@ -109,6 +109,16 @@ export interface PageReadyMessage {
   features: DOMFeatures;
 }
 
+// background → content (pull DOM features on demand, Layer 3 input)
+export interface GetFeaturesMessage {
+  type: 'GET_FEATURES';
+}
+
+export interface FeaturesResultMessage {
+  type: 'FEATURES_RESULT';
+  features: DOMFeatures;
+}
+
 // content → background (warning banner actions)
 export interface GoBackMessage {
   type: 'GO_BACK';
@@ -126,5 +136,7 @@ export type ExtensionMessage =
   | LogoMatchResultMessage
   | DetectedMessage
   | PageReadyMessage
+  | GetFeaturesMessage
+  | FeaturesResultMessage
   | GoBackMessage
   | RescanMessage;

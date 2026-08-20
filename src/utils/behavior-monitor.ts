@@ -1,7 +1,7 @@
-import type { DetectionResult, FlaggedElement } from '@/lib/types';
+import type { DetectionResult, ExtensionMessage, FlaggedElement } from '@/lib/types';
 import type { WarningCondition } from '@/lib/conditions';
 import { logInteraction } from '@/utils/interaction-log';
-import { highlightFlaggedElements } from '@/utils/driver-highlight';
+import { clearHighlight, highlightFlaggedElements } from '@/utils/driver-highlight';
 import { bannerRenderer } from '@/components/renderers/banner';
 import { iconRenderer } from '@/components/renderers/icon';
 import { modalRenderer } from '@/components/renderers/modal';
@@ -80,6 +80,7 @@ export function startProgressiveReveal(
     document.removeEventListener('keydown', onKey, true);
     activeRenderer?.destroy();
     activeRenderer = null;
+    clearHighlight();
   };
 
   const actions: WarningActions = {
@@ -118,6 +119,7 @@ export function startProgressiveReveal(
 
     activeRenderer?.destroy();
     activeRenderer = null;
+    clearHighlight();
 
     if (s === 1) {
       activeRenderer = iconRenderer();

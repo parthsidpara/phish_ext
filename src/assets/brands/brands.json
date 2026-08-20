@@ -2,11 +2,14 @@
   {
     "id": "dummybank",
     "name": "DummyBank",
-    "phash": "b399cc668ccc6699",
+    "phash": "b3cc668c66993333",
     "phashByViewport": {
-      "1280x800": "b399cc668ccc6699",
-      "1366x768": "b399cc6698cc669c",
-      "1920x1080": "b399cc6699992633"
+      "1280x800": "b3cc668c66993333",
+      "1366x768": "b399668ccc669933",
+      "1440x900": "b3cc669866993366",
+      "1536x864": "b399668ccc669933",
+      "1600x900": "b39966cccc329933",
+      "1920x1080": "b3cc662699339966"
     },
     "phashThreshold": 5,
     "allowedDomains": [
@@ -37,11 +40,14 @@
   {
     "id": "github",
     "name": "GitHub",
-    "phash": "b333c98e6666cc98",
+    "phash": "b399cc6664dc3133",
     "phashByViewport": {
-      "1280x800": "b333c98e6666cc98",
-      "1366x768": "b333c98e6666c899",
-      "1920x1080": "b3338998cce66666"
+      "1280x800": "b399cc6664dc3133",
+      "1366x768": "b399cc66668c9933",
+      "1440x900": "b3998c6666cc9933",
+      "1536x864": "b3338c6666cc9999",
+      "1600x900": "b33389ce66668c99",
+      "1920x1080": "b33399cc6666668c"
     },
     "phashThreshold": 5,
     "allowedDomains": [
@@ -72,11 +78,14 @@
   {
     "id": "shopify",
     "name": "Shopify",
-    "phash": "9b3064ce649b9b33",
+    "phash": "9b3064669b9b66cc",
     "phashByViewport": {
-      "1280x800": "9b3064ce649b9b33",
-      "1366x768": "9b2064ce669b9b93",
-      "1920x1080": "99996666cc663399"
+      "1280x800": "9b3064669b9b66cc",
+      "1366x768": "9b6164669b9b6664",
+      "1440x900": "996464669b9b3366",
+      "1536x864": "9976646633993366",
+      "1600x900": "9936666633993393",
+      "1920x1080": "99b166cc66339999"
     },
     "phashThreshold": 5,
     "allowedDomains": [
@@ -108,11 +117,14 @@
   {
     "id": "vtop",
     "name": "VTOP",
-    "phash": "9f634838185d5d5d",
+    "phash": "bf60181c5f5d1a3a",
     "phashByViewport": {
-      "1280x800": "9f634838185d5d5d",
-      "1366x768": "9f634a380d5d595c",
-      "1920x1080": "bf40783f053f013e"
+      "1280x800": "bf60181c5f5d1a3a",
+      "1366x768": "bf62181e5d5d1c1a",
+      "1440x900": "9f631c1d1f591e18",
+      "1536x864": "9f611e1d0f1c5d1c",
+      "1600x900": "9f601f1f135c190f",
+      "1920x1080": "9f507b1f1b144b1c"
     },
     "phashThreshold": 5,
     "allowedDomains": [
@@ -144,11 +156,14 @@
   {
     "id": "linkedin",
     "name": "LinkedIn",
-    "phash": "b38b27898c27ce66",
+    "phash": "b3038d8e27c69b39",
     "phashByViewport": {
-      "1280x800": "b38b27898c27ce66",
-      "1366x768": "b389278d8e27cc66",
-      "1920x1080": "b39b8d23318c6637"
+      "1280x800": "b3038d8e27c69b39",
+      "1366x768": "b307898e07468fbb",
+      "1440x900": "b38f218c27ce6699",
+      "1536x864": "b389238d26cd66d9",
+      "1600x900": "b389238d268fce27",
+      "1920x1080": "b3998d338c268fcc"
     },
     "phashThreshold": 5,
     "allowedDomains": [
@@ -179,11 +194,14 @@
   {
     "id": "dropbox",
     "name": "Dropbox",
-    "phash": "b3cc1966991e6699",
+    "phash": "a6992699669966d9",
     "phashByViewport": {
-      "1280x800": "b3cc1966991e6699",
-      "1366x768": "b3ce1966990e6699",
-      "1920x1080": "b6c19c639c8d720f"
+      "1280x800": "a6992699669966d9",
+      "1366x768": "a6d926d906679966",
+      "1440x900": "b38c2389278d27dd",
+      "1536x864": "b3c826c98c639d67",
+      "1600x900": "b3c826c98c639d67",
+      "1920x1080": "b38c26238d278d77"
     },
     "phashThreshold": 5,
     "allowedDomains": [
@@ -214,11 +232,14 @@
   {
     "id": "idfcfirstbank",
     "name": "IDFC First Bank",
-    "phash": "bb00ef8945bed5c0",
+    "phash": "b0aa8ddb86aad0d5",
     "phashByViewport": {
-      "1280x800": "bb60af855b8784aa",
-      "1366x768": "bb20af85fb84a0ea",
-      "1920x1080": "ba00ef8f45fbc580"
+      "1280x800": "b0aa8ddb86aad0d5",
+      "1366x768": "b0aa8ddb87aae0d1",
+      "1440x900": "906a8d7b97aae8d0",
+      "1536x864": "90aa8dfb95ab80f8",
+      "1600x900": "80aa9d7bc7aba2e0",
+      "1920x1080": "ba00af45ebc5a8ba"
     },
     "phashThreshold": 5,
     "allowedDomains": [

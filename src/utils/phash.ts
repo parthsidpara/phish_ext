@@ -13,19 +13,31 @@
  *
  * ## Algorithm
  *
- * 1. Convert to grayscale (ITU-R BT.601 luma weights).
- * 2. Resize down to 32x32 via box-filter (area-average) downsampling.
+ * 1. Crop to a fixed top band (height = `CROP_ASPECT` x image width).
+ *    A screenshot only contains what happened to be *visible*, so a tall
+ *    window shows more of the page than a short one and the two images differ
+ *    enormously even though it is the same page. Tying the band's height to
+ *    the image's own width makes the hash independent of window height --
+ *    measured: two captures of one page at 1920 wide but 1080 vs 955 tall go
+ *    from 26 bits apart to 0. It also cancels display scaling, since the band
+ *    scales with the image.
+ *
+ *    Window *width* is not normalised away, and cannot be: at different widths
+ *    the page genuinely reflows (columns rewrap, elements resize). Width
+ *    buckets in the reference dataset cover that; see tools/config.json.
+ * 2. Convert to grayscale (ITU-R BT.601 luma weights).
+ * 3. Resize down to 32x32 via box-filter (area-average) downsampling.
  *    - Grayscale is applied before resizing rather than after — mathematically
  *      equivalent (luma is a linear combination of R/G/B, and box-filter
  *      averaging commutes with linear combinations) but cheaper, since the
  *      resize pass then touches one channel instead of four.
- * 3. Compute a 2D DCT-II (separable: 1D DCT along rows, then along columns).
- * 4. Take the top-left 8x8 block of the DCT result (the lowest frequencies —
+ * 4. Compute a 2D DCT-II (separable: 1D DCT along rows, then along columns).
+ * 5. Take the top-left 8x8 block of the DCT result (the lowest frequencies —
  *    the coarse structure of the image, ignoring fine detail/noise).
- * 5. Compute the median of those 64 coefficients, *excluding* the [0][0] DC
+ * 6. Compute the median of those 64 coefficients, *excluding* the [0][0] DC
  *    term (it just encodes overall brightness and would skew the median away
  *    from the coefficients that actually describe structure).
- * 6. Threshold all 64 coefficients (DC term included) against that median:
+ * 7. Threshold all 64 coefficients (DC term included) against that median:
  *    above -> 1, below -> 0. The result is a 64-bit hash, hex-encoded.
  *
  * ## Comparison
@@ -50,6 +62,16 @@ export interface PixelBuffer {
 
 // ── Tunables ──
 
+/**
+ * Height of the hashed band, as a fraction of the image's width.
+ *
+ * 0.45 was chosen empirically: small enough to still fit inside a maximised
+ * 16:9 window (1920x1080 needs 864 <= 1080), which matters because the band
+ * has to be fully present in *both* the reference capture and the live one
+ * for their hashes to agree.
+ */
+export const CROP_ASPECT = 0.45;
+
 /** Side length the image is downsampled to before the DCT. */
 export const RESIZE_SIZE = 32;
 /** Side length of the low-frequency block kept from the DCT result. */
@@ -57,10 +79,11 @@ export const LOW_FREQ_SIZE = 8;
 /** Total hash length in bits (LOW_FREQ_SIZE^2). */
 export const HASH_BITS = LOW_FREQ_SIZE * LOW_FREQ_SIZE;
 
-// ── Step 1: grayscale (luma, ITU-R BT.601 weights) ──
+// ── Step 2: grayscale (luma, ITU-R BT.601 weights) ──
 
-export function toGrayscale(pixels: PixelBuffer): Float64Array {
-  const { width, height, data } = pixels;
+export function toGrayscale(pixels: PixelBuffer, rows?: number): Float64Array {
+  const { width, data } = pixels;
+  const height = Math.min(pixels.height, rows ?? pixels.height);
   const gray = new Float64Array(width * height);
   for (let i = 0; i < width * height; i++) {
     const o = i * 4;
@@ -69,7 +92,7 @@ export function toGrayscale(pixels: PixelBuffer): Float64Array {
   return gray;
 }
 
-// ── Step 2: resize via box filter (area averaging) ──
+// ── Step 3: resize via box filter (area averaging) ──
 
 /**
  * Downsample a single-channel grayscale buffer to `dstSize x dstSize` by
@@ -112,7 +135,7 @@ export function resizeGrayscale(
   return out;
 }
 
-// ── Step 3: 2D DCT-II (separable: 1D DCT on rows, then on columns) ──
+// ── Step 4: 2D DCT-II (separable: 1D DCT on rows, then on columns) ──
 
 /** Orthonormal 1D DCT-II. O(N^2); trivial at N=32 (~1k multiply-adds). */
 export function dct1D(vector: ArrayLike<number>): number[] {
@@ -152,7 +175,7 @@ export function dct2D(matrix: number[][]): number[][] {
   return result;
 }
 
-// ── Steps 4-6: low-frequency block -> median (excluding DC) -> 64-bit hash ──
+// ── Steps 5-7: low-frequency block -> median (excluding DC) -> 64-bit hash ──
 
 function medianOf(values: number[]): number {
   const sorted = [...values].sort((a, b) => a - b);
@@ -200,8 +223,11 @@ function bitsToHex(bits: boolean[]): string {
  * (16 chars for the default 64-bit hash).
  */
 export function computePerceptualHash(pixels: PixelBuffer): string {
-  const gray = toGrayscale(pixels);
-  const resized = resizeGrayscale(gray, pixels.width, pixels.height, RESIZE_SIZE);
+  // Only the top band is hashed, so window height doesn't change the result.
+  // Rows below it are never even converted to grayscale.
+  const bandHeight = Math.max(1, Math.min(pixels.height, Math.round(pixels.width * CROP_ASPECT)));
+  const gray = toGrayscale(pixels, bandHeight);
+  const resized = resizeGrayscale(gray, pixels.width, bandHeight, RESIZE_SIZE);
   const dct = dct2D(resized);
   const bits = extractHashBits(dct);
   return bitsToHex(bits);
